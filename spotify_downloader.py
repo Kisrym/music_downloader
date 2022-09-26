@@ -2,8 +2,8 @@ import requests, urllib, re, youtube_dl, eyed3, os
 from unidecode import unidecode
 from eyed3.id3.frames import ImageFrame
 
-TOKEN = "BQCBlcG5cL8LGECvrcgSP-QUqXZu85IZh30rR-a2OexVYZlWEVvfXeJXssSsGJI7gG3LUplxm530sVE0ESYfhlYtjv24sQHszkyFEzRwO_Vab_IEmXqb98DfYtLDD5esV_B1G57KVi_E-pg0oItxFl7BHbG_s6sROtGgDObsUadilEt0KQrWTU4h0XxVBxo"
-playlist = "https://open.spotify.com/playlist/23fJjWSRNwxKtPNbsU7CSW?si=86f4a01b0e6749a9"[34:].split("?")[0]
+TOKEN = "SPOTIFY-API-TOKEN"
+playlist = "PLAYLIST-LINK"[34:].split("?")[0]
 
 ydl_opts = {
     'format': '250',
