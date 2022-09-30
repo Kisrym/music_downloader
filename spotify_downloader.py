@@ -6,6 +6,7 @@ TOKEN = "SPOTIFY-API-TOKEN"
 playlist = "PLAYLIST-LINK"[34:].split("?")[0]
 
 ydl_opts = {
+    'ignoreerrors': True,
     'format': '250',
     'addmetadata': True,
     'postprocessors': [{
@@ -26,7 +27,8 @@ cont = 0
 while True:
     try:
         r = requests.get(f"https://api.spotify.com/v1/playlists/{playlist}/tracks?offset={cont_offset}", headers = {"Authorization": f"Bearer {TOKEN}"}).json()
-
+        r["items"][cont]["track"]["name"] = r["items"][cont]["track"]["name"].replace("/", r"%2F") if "/" in r["items"][cont]["track"]["name"] else r["items"][cont]["track"]["name"] # tirando a / que estraga tudo
+        
         #! Pegando as imagens
         if not os.path.exists(f'img/{r["items"][cont]["track"]["name"]}.png'):
             imagem = requests.get(r["items"][cont]["track"]["album"]["images"][0]['url']).content #? dando request na imagem do álbum
@@ -48,7 +50,7 @@ while True:
 
                 except youtube_dl.utils.DownloadError:
                     continue
-        
+                
             #! Colocando as tags
             c = f"{r['items'][cont]['track']['name']}.mp3"
             print(c)
@@ -71,3 +73,6 @@ while True:
     except IndexError:
         for img in os.listdir("img"): os.remove(img) #? removendo as imagens
         break
+    
+    except OSError:
+        print("Não foi possível instalar a música, pulando para a próxima")
