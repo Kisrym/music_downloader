@@ -21,7 +21,7 @@ ydl_opts = {
     'keepvideo': False
 }
 
-cont_offset = 0
+cont_offset = 200
 cont = 0
 
 while True:
@@ -30,14 +30,16 @@ while True:
         r["items"][cont]["track"]["name"] = r["items"][cont]["track"]["name"].replace("/", r"%2F") if "/" in r["items"][cont]["track"]["name"] else r["items"][cont]["track"]["name"] # tirando a / que estraga tudo
         
         #! Pegando as imagens
-        if not os.path.exists(f'img/{r["items"][cont]["track"]["name"]}.png'):
-            imagem = requests.get(r["items"][cont]["track"]["album"]["images"][0]['url']).content #? dando request na imagem do álbum
-            with open(f'img/{r["items"][cont]["track"]["name"]}.png', 'wb') as a: #? criando o arquivo com o nome da música
-                a.write(imagem)
+        try:
+            if not os.path.exists(f'img/{r["items"][cont]["track"]["name"]}.png'):
+                imagem = requests.get(r["items"][cont]["track"]["album"]["images"][0]['url']).content #? dando request na imagem do álbum
+                with open(f'img/{r["items"][cont]["track"]["name"]}.png', 'wb') as a: #? criando o arquivo com o nome da música
+                    a.write(imagem)
+        except TypeError: continue
 
         #! Baixando a música
         html = urllib.request.urlopen(f"https://www.youtube.com/results?search_query={unidecode(r['items'][cont]['track']['name'].replace(' ', '+'))}+{unidecode(r['items'][cont]['track']['album']['artists'][0]['name'].replace(' ', '+'))}") #? procurando o nome da música e do artista
-        print(r['items'][cont]['track']['name'].replace(' ', '+'))
+        
         video_id = re.findall(r"watch\?v=(\S{11})", html.read().decode())[0] #? pegando o id do vídeo
 
         if not os.path.exists(f"musicas/{r['items'][cont]['track']['name']}.mp3"):
@@ -53,7 +55,7 @@ while True:
                 
             #! Colocando as tags
             c = f"{r['items'][cont]['track']['name']}.mp3"
-            print(c)
+            
             musica = eyed3.load("musicas/" + c)
 
             if musica.tag == None: musica.initTag()
