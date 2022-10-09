@@ -2,26 +2,24 @@ import requests, urllib, re, youtube_dl, eyed3, os
 from unidecode import unidecode
 from eyed3.id3.frames import ImageFrame
 
-TOKEN = "SPOTIFY-API-TOKEN"
-playlist = "PLAYLIST-LINK"[34:].split("?")[0]
+TOKEN = "SPOTIFY_API"
+playlist = "PLAYLIST_LINK"[34:].split("?")[0]
 
 ydl_opts = {
     'ignoreerrors': True,
-    'format': '250',
-    'addmetadata': True,
+    'prefer_ffmpeg': True,
+    'format': 'bestaudio/best',
     'postprocessors': [{
         'key': 'FFmpegExtractAudio',
         'preferredcodec': 'mp3',
-        'preferredquality': '192'
+        'preferredquality': '192',
     }],
-    'postprocessor_args': [
-        '-ar', '16000'
-    ],
     'prefer_ffmpeg': True,
     'keepvideo': False
 }
 
-cont_offset = 200
+
+cont_offset = 0
 cont = 0
 
 while True:
@@ -73,7 +71,7 @@ while True:
 
         cont += 1
     except IndexError:
-        for img in os.listdir("img"): os.remove(img) #? removendo as imagens
+        for img in os.listdir("img"): os.remove("img/" + img) #? removendo as imagens
         break
     
     except OSError:
