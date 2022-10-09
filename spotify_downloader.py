@@ -58,8 +58,12 @@ while True:
 
             if musica.tag == None: musica.initTag()
 
+            musica.tag.title = r['items'][cont]['track']['name']
+            musica.tag.release_date = r['items'][cont]['track']['album']['release_date']
             musica.tag.artist = r['items'][cont]['track']['album']['artists'][0]['name']
             musica.tag.album = r['items'][cont]['track']['album']['name']
+            musica.tag.track_num = r['items'][cont]['track']['track_number']
+            musica.tag.disc_num = r['items'][cont]['track']['disc_number']
 
             with open(f"img/{c[0:-4]}.png", "rb") as imagem: 
                 musica.tag.images.set(ImageFrame.FRONT_COVER, imagem.read(), 'image/png')
