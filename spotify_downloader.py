@@ -1,6 +1,7 @@
-import requests, urllib, re, youtube_dl, eyed3, os
+import requests, urllib, re, eyed3, os
 from unidecode import unidecode
 from eyed3.id3.frames import ImageFrame
+from yt_dlp import YoutubeDL
 
 TOKEN = "SPOTIFY_API"
 playlist = "PLAYLIST_LINK"[34:].split("?")[0]
@@ -41,15 +42,10 @@ while True:
         video_id = re.findall(r"watch\?v=(\S{11})", html.read().decode())[0] #? pegando o id do vídeo
 
         if not os.path.exists(f"musicas/{r['items'][cont]['track']['name']}.mp3"):
-            while True:
-                try:
-                    ydl_opts["outtmpl"] = f"musicas/{r['items'][cont]['track']['name']}.%(ext)s" #? evitando corrupção do arquivo
-                    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                        ydl.download([f'https://www.youtube.com/watch?v={video_id}'])
-                    break
-
-                except youtube_dl.utils.DownloadError:
-                    continue
+            ydl_opts["outtmpl"] = f"musicas/{r['items'][cont]['track']['name']}.%(ext)s" #? evitando corrupção do arquivo
+            with YoutubeDL(ydl_opts) as ydl:
+                ydl.download([f'https://www.youtube.com/watch?v={video_id}'])
+            
                 
             #! Colocando as tags
             c = f"{r['items'][cont]['track']['name']}.mp3"
