@@ -2,9 +2,12 @@ import requests, urllib, re, eyed3, os
 from unidecode import unidecode
 from eyed3.id3.frames import ImageFrame
 from yt_dlp import YoutubeDL
+from refresh_token import Refresh
 
-TOKEN = "SPOTIFY_API"
-playlist = "PLAYLIST_LINK"[34:].split("?")[0]
+a = Refresh()
+
+TOKEN = a.refresh()
+playlist = ""[34:].split("?")[0]
 
 ydl_opts = {
     'ignoreerrors': True,
