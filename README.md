@@ -15,6 +15,8 @@ ou
 python spotify_downloader.py
 ```
 
+Para ver os parâmetros necessários para rodar, use `python spotify_downloader.py -h`
+
 ## Configuração
 
 As configurações do código são feitas no `config.json`.

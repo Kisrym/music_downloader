@@ -3,11 +3,19 @@ from unidecode import unidecode
 from eyed3.id3.frames import ImageFrame
 from yt_dlp import YoutubeDL
 from refresh_token import Refresh
+import argparse
+
+parser = argparse.ArgumentParser(description = "Spotify playlist downloader")
+
+parser.add_argument('-playlist', action = 'store', dest = 'playlist', required = True, help = "Playlist que será instalada")
+parser.add_argument('--offset', action = 'store', dest = 'offset', default = 0, required = False, help = "Música inicial")
+
+arguments = parser.parse_args()
 
 a = Refresh()
 
 TOKEN = a.refresh()
-playlist = ""[34:].split("?")[0]
+playlist = arguments.playlist[34:].split("?")[0]
 
 ydl_opts = {
     'ignoreerrors': True,
@@ -23,7 +31,7 @@ ydl_opts = {
 }
 
 
-cont_offset = 0
+cont_offset = int(arguments.offset) - 1
 cont = 0
 
 while True:
