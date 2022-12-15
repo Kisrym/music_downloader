@@ -1,21 +1,19 @@
-# Spotify Downloader
+# Music Downloader
 
-Um código capaz de extrair todas as músicas de uma playlist do Spotify e instalá-las automaticamente.
+Um código capaz de instalar músicas e playlists do Spotify e Youtube
 ## Usando o código
 
 Para usar o código, só é preciso instalá-lo (prestando atenção com as pastas *img* e *musicas*, necessárias para o funcionamento do código) e rodar com o comando:
 
 ```bash
-python3 spotify_downloader.py
+python3 music_downloader.py
 ```
 
 ou
 
 ```bash
-python spotify_downloader.py
+python music_downloader.py
 ```
-
-Para ver os parâmetros necessários para rodar, use `python spotify_downloader.py -h`
 
 ## Configuração
 
