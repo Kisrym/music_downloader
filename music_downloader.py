@@ -8,8 +8,10 @@ class MusicDownloader:
     def __init__(self):
         self.name = []
         self.config = []
+        self.TOKEN = Refresh().refresh()
     
     def download(self):
+        print(self.name)
         ydl_opts = {
             'ignoreerrors': True,
             'prefer_ffmpeg': True,
@@ -24,6 +26,7 @@ class MusicDownloader:
         }
 
         for item in range(len(self.name)):
+            print(self.name[item])
             html = urllib.request.urlopen(f"https://www.youtube.com/results?search_query={self.name[item]}")
             video_id = re.findall(r"watch\?v=(\S{11})", html.read().decode())[0] #? pegando o id do vídeo
 
@@ -31,7 +34,7 @@ class MusicDownloader:
                 ydl_opts["outtmpl"] = f"musicas/{self.config[item]['title']}.%(ext)s" #? evitando corrupção do arquivo
                 with YoutubeDL(ydl_opts) as ydl:
                     ydl.download([f'https://www.youtube.com/watch?v={video_id}'])
-        
+
         self.add_parameters()
 
     def add_parameters(self):
@@ -67,7 +70,6 @@ class MusicDownloader:
 class Spotify(MusicDownloader):
     def __init__(self):
         super().__init__()
-        self.TOKEN = Refresh().refresh()
 
     def playlist(self, playlist, offset = 0):
         if "playlist" not in playlist:
@@ -120,4 +122,20 @@ class Youtube(MusicDownloader):
     
     def track(self, music):
         music = music.split("=")[1]
-        self.name.append(music)
+        with YoutubeDL({}) as ydl:
+            title = unidecode(ydl.extract_info(f"http://www.youtube.com/watch?v={music}", download = False).get("title", None).replace(" ", "%20").replace("-", "")) # getting the video name
+        
+        r = requests.get(f"https://api.spotify.com/v1/search?q={title}&type=track&limit=1", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json()
+        r = r["tracks"]["items"][0]
+
+        self.config.append({
+            "thumbnail" : r["album"]["images"][0]["url"],
+            "title" : r['name'],
+            "release_date" : r['album']['release_date'],
+            "artist" : r['album']['artists'][0]['name'],
+            "album" : r['album']['name'],
+            "track_num" : r['track_number'],
+            "disc_num" : r['disc_number']
+        })
+
+        self.name.append(title)
