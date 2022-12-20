@@ -5,13 +5,19 @@ from yt_dlp import YoutubeDL
 from refresh_token import Refresh
 
 class MusicDownloader:
+    """
+    MusicDownloader é um módulo em Python capaz de instalar músicas playlists do Spotify e Youtube.
+    """
     def __init__(self):
         self.name = []
         self.config = []
         self.TOKEN = Refresh().refresh()
     
     def download(self):
-        print(self.name)
+        """
+        Instala a música/playlist definida.
+        """
+
         ydl_opts = {
             'ignoreerrors': True,
             'prefer_ffmpeg': True,
@@ -26,7 +32,6 @@ class MusicDownloader:
         }
 
         for item in range(len(self.name)):
-            print(self.name[item])
             html = urllib.request.urlopen(f"https://www.youtube.com/results?search_query={self.name[item]}")
             video_id = re.findall(r"watch\?v=(\S{11})", html.read().decode())[0] #? pegando o id do vídeo
 
@@ -35,9 +40,9 @@ class MusicDownloader:
                 with YoutubeDL(ydl_opts) as ydl:
                     ydl.download([f'https://www.youtube.com/watch?v={video_id}'])
 
-        self.add_parameters()
+        self.__add_parameters()
 
-    def add_parameters(self):
+    def __add_parameters(self):
         #! Pegando as thumbnails
         for cont in range(len(self.config)):
             try:
@@ -71,7 +76,16 @@ class Spotify(MusicDownloader):
     def __init__(self):
         super().__init__()
 
-    def playlist(self, playlist, offset = 0):
+    def playlist(self, playlist: str, offset = 0):
+        """Objeto para o link da playlist do Spotify.
+
+        Args:
+            playlist (str): Link da playlist.
+            offset (int, opcional): Música inicial do download da playlist. Default: 0
+
+        Raises:
+            ValueError: Se a playlist não existir ou não for do formato correto.
+        """
         if "playlist" not in playlist:
             raise ValueError("Playlist inválida")
         
@@ -101,7 +115,12 @@ class Spotify(MusicDownloader):
             except IndexError:
                 break
     
-    def track(self, music):
+    def track(self, music: str, /):
+        """Objeto para o link da música do Spotify.
+
+        Args:
+            music (str): Link da música.
+        """
         music = music[31:].split("?")[0]
 
         r = requests.get(f"https://api.spotify.com/v1/tracks/{music}", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json()
@@ -120,7 +139,12 @@ class Youtube(MusicDownloader):
     def __init__(self):
         super().__init__()
     
-    def track(self, music):
+    def track(self, music: str, /):
+        """Objeto para o link da música do Youtube.
+
+        Args:
+            music (str): Link da música.
+        """
         music = music.split("=")[1]
         with YoutubeDL({}) as ydl:
             title = unidecode(ydl.extract_info(f"http://www.youtube.com/watch?v={music}", download = False).get("title", None).replace(" ", "%20").replace("-", "")) # getting the video name

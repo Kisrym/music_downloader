@@ -15,6 +15,14 @@ ou
 python music_downloader.py
 ```
 
+## Exemplos
+```python
+app = Spotify()
+app.playlist(spotify_link)
+app.download()
+# Mesma coisa com a classe Youtube
+```
+
 ## Configuração
 
 As configurações do código são feitas no `config.json`.
@@ -23,6 +31,8 @@ As configurações do código são feitas no `config.json`.
 |---------------|------------------------------------------|
 | refresh_token | Seu refresh_token do Spotify.            |
 | auth          |  `client_id:secret_id` criptografado em base64. |
+
+Ambas configurações são adquiridas criando um aplicativo no [Spotify for Developers](https://developer.spotify.com).
 
 ## Instalação dos requisitos
 

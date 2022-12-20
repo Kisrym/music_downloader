@@ -12,9 +12,12 @@ class Refresh:
         r = requests.post(r"https://accounts.spotify.com/api/token",
                         data = {"grant_type" : "refresh_token", "refresh_token" : self.refresh_token},
                         headers = {"Authorization" : "Basic " + self.auth}
-                     )
+                    )
         
-        return r.json()["access_token"]
+        if len(r.json()) > 2:
+            return r.json()["access_token"]
+        else:
+            raise KeyError("Informações inválidas.")
 
 if __name__ == "__main__":
     a = Refresh()
