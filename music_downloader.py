@@ -12,6 +12,7 @@ class MusicDownloader:
         self.name = []
         self.config = []
         self.TOKEN = Refresh().refresh()
+        self.yt = False
     
     def download(self):
         """
@@ -32,9 +33,7 @@ class MusicDownloader:
         }
 
         for item in range(len(self.name)):
-            html = urllib.request.urlopen(f"https://www.youtube.com/results?search_query={self.name[item]}")
-            video_id = re.findall(r"watch\?v=(\S{11})", html.read().decode())[0] #? pegando o id do vídeo
-            if not re.match(r"(\S{11})", self.name[item]):
+            if not self.yt:
                 html = urllib.request.urlopen(f"https://www.youtube.com/results?search_query={self.name[item]}")
                 video_id = re.findall(r"watch\?v=(\S{11})", html.read().decode())[0] #? pegando o id do vídeo
 
@@ -56,25 +55,28 @@ class MusicDownloader:
                     imagem = requests.get(self.config[cont]["thumbnail"]).content #? dando request na imagem do álbum
                     with open(f'img/{self.config[cont]["title"]}.png', 'wb') as a: #? criando o arquivo com o nome da música
                         a.write(imagem)
-            except TypeError:
-                pass
+            except:
+                continue
         
         #! Colocando as tags
         for c in range(len(self.name)):
-            musica = eyed3.load(f"musicas/{self.config[c]['title']}.mp3")
+            try:
+                musica = eyed3.load(f"musicas/{self.config[c]['title']}.mp3")
 
-            if musica.tag == None: musica.initTag()
+                if musica.tag == None: musica.initTag()
 
-            musica.tag.title = self.config[c]["title"]
-            musica.tag.release_date = self.config[c]["release_date"]
-            musica.tag.artist = self.config[c]["artist"]
-            musica.tag.album = self.config[c]["album"]
-            musica.tag.track_num = self.config[c]["track_num"]
-            musica.tag.disc_num = self.config[c]["disc_num"]
+                musica.tag.title = self.config[c]["title"]
+                musica.tag.release_date = self.config[c]["release_date"]
+                musica.tag.artist = self.config[c]["artist"]
+                musica.tag.album = self.config[c]["album"]
+                musica.tag.track_num = self.config[c]["track_num"]
+                musica.tag.disc_num = self.config[c]["disc_num"]
 
-            with open(f"img/{self.config[c]['title']}.png", "rb") as imagem:
-                musica.tag.images.set(ImageFrame.FRONT_COVER, imagem.read(), 'image/png')
-                musica.tag.save()
+                with open(f"img/{self.config[c]['title']}.png", "rb") as imagem:
+                    musica.tag.images.set(ImageFrame.FRONT_COVER, imagem.read(), 'image/png')
+                    musica.tag.save()
+            except:
+                continue
         
         for img in os.listdir("img"): os.remove("img/" + img) #? removendo as imagens
 
@@ -144,6 +146,7 @@ class Spotify(MusicDownloader):
 class Youtube(MusicDownloader):
     def __init__(self):
         super().__init__()
+        self.yt = True
     
     def track(self, music: str, /):
         """Objeto para o link da música do Youtube.
