@@ -34,6 +34,12 @@ class MusicDownloader:
         for item in range(len(self.name)):
             html = urllib.request.urlopen(f"https://www.youtube.com/results?search_query={self.name[item]}")
             video_id = re.findall(r"watch\?v=(\S{11})", html.read().decode())[0] #? pegando o id do vídeo
+            if not re.match(r"(\S{11})", self.name[item]):
+                html = urllib.request.urlopen(f"https://www.youtube.com/results?search_query={self.name[item]}")
+                video_id = re.findall(r"watch\?v=(\S{11})", html.read().decode())[0] #? pegando o id do vídeo
+
+            else:
+                video_id = self.name[item]
 
             if not os.path.exists(f"musicas/{self.config[item]['title']}.mp3"):
                 ydl_opts["outtmpl"] = f"musicas/{self.config[item]['title']}.%(ext)s" #? evitando corrupção do arquivo
@@ -162,4 +168,4 @@ class Youtube(MusicDownloader):
             "disc_num" : r['disc_number']
         })
 
-        self.name.append(title)
+        self.name.append(music)
