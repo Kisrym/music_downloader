@@ -5,14 +5,13 @@ from yt_dlp import YoutubeDL
 from refresh_token import Refresh
 
 class MusicDownloader:
-    """
-    MusicDownloader é um módulo em Python capaz de instalar músicas playlists do Spotify e Youtube.
-    """
+    """MusicDownloader é um módulo em Python capaz de instalar músicas playlists do Spotify e Youtube."""
     def __init__(self):
         self.name = []
         self.config = []
         self.TOKEN = Refresh().refresh()
         self.yt = False
+        self.out_path = "."
     
     def download(self):
         """
@@ -28,7 +27,6 @@ class MusicDownloader:
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }],
-            'prefer_ffmpeg': True,
             'keepvideo': False
         }
 
@@ -40,20 +38,22 @@ class MusicDownloader:
             else:
                 video_id = self.name[item]
 
-            if not os.path.exists(f"musicas/{self.config[item]['title']}.mp3"):
-                ydl_opts["outtmpl"] = f"musicas/{self.config[item]['title']}.%(ext)s" #? evitando corrupção do arquivo
+            if not os.path.exists(f"{self.out_path}/musicas/{self.config[item]['title']}.mp3"):
+                ydl_opts["outtmpl"] = f"{self.out_path}/musicas/{self.config[item]['title']}.%(ext)s" #? evitando corrupção do arquivo
                 with YoutubeDL(ydl_opts) as ydl:
                     ydl.download([f'https://www.youtube.com/watch?v={video_id}'])
 
         self.__add_parameters()
 
     def __add_parameters(self):
+        if "img" not in os.listdir(self.out_path): os.mkdir(f"{self.out_path}/img")
+        
         #! Pegando as thumbnails
         for cont in range(len(self.config)):
             try:
-                if not os.path.exists(f'img/{self.config[cont]["title"]}.png'):
+                if not os.path.exists(f'{self.out_path}/img/{self.config[cont]["title"]}.png'):
                     imagem = requests.get(self.config[cont]["thumbnail"]).content #? dando request na imagem do álbum
-                    with open(f'img/{self.config[cont]["title"]}.png', 'wb') as a: #? criando o arquivo com o nome da música
+                    with open(f'{self.out_path}/img/{self.config[cont]["title"]}.png', 'wb') as a: #? criando o arquivo com o nome da música
                         a.write(imagem)
             except:
                 continue
@@ -61,7 +61,7 @@ class MusicDownloader:
         #! Colocando as tags
         for c in range(len(self.name)):
             try:
-                musica = eyed3.load(f"musicas/{self.config[c]['title']}.mp3")
+                musica = eyed3.load(f"{self.out_path}/musicas/{self.config[c]['title']}.mp3")
 
                 if musica.tag == None: musica.initTag()
 
@@ -72,17 +72,18 @@ class MusicDownloader:
                 musica.tag.track_num = self.config[c]["track_num"]
                 musica.tag.disc_num = self.config[c]["disc_num"]
 
-                with open(f"img/{self.config[c]['title']}.png", "rb") as imagem:
+                with open(f"{self.out_path}/img/{self.config[c]['title']}.png", "rb") as imagem:
                     musica.tag.images.set(ImageFrame.FRONT_COVER, imagem.read(), 'image/png')
                     musica.tag.save()
             except:
                 continue
         
-        for img in os.listdir("img"): os.remove("img/" + img) #? removendo as imagens
+        for img in os.listdir(f"{self.out_path}/img"): os.remove(f"{self.out_path}/img/" + img) #? removendo as imagens
 
 class Spotify(MusicDownloader):
-    def __init__(self):
+    def __init__(self, out_path: str = "."):
         super().__init__()
+        self.out_path = out_path
 
     def playlist(self, playlist: str, offset = 0):
         """Objeto para o link da playlist do Spotify.
@@ -144,9 +145,10 @@ class Spotify(MusicDownloader):
         })
 
 class Youtube(MusicDownloader):
-    def __init__(self):
+    def __init__(self, out_path: str = "."):
         super().__init__()
         self.yt = True
+        self.out_path = out_path
     
     def track(self, music: str, /):
         """Objeto para o link da música do Youtube.
