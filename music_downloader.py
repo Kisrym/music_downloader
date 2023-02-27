@@ -156,7 +156,7 @@ class Youtube(MusicDownloader):
         Args:
             music (str): Link da música.
         """
-        music = music.split("=")[1]
+        music = music.split("=")[1] if "watch" in music else music.split("be/")[1]
         with YoutubeDL({}) as ydl:
             title = unidecode(ydl.extract_info(f"http://www.youtube.com/watch?v={music}", download = False).get("title", None).replace(" ", "%20").replace("-", "")) # getting the video name
         
