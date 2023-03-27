@@ -224,8 +224,3 @@ class Youtube(MusicDownloader):
             })
 
             self.name.append(id)
-
-if __name__ == "__main__":
-    a = Youtube()
-    a.playlist("https://www.youtube.com/playlist?list=PLqwGfnBwrVcuwKyEBWGhr960Xw3qV5Zd5")
-    a.download()
