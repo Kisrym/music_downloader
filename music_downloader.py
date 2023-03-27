@@ -85,12 +85,12 @@ class Spotify(MusicDownloader):
         super().__init__()
         self.out_path = out_path
 
-    def playlist(self, playlist: str, offset = 0):
+    def playlist(self, playlist: str, offset = 1):
         """Objeto para o link da playlist do Spotify.
 
         Args:
             playlist (str): Link da playlist.
-            offset (int, opcional): Música inicial do download da playlist. Default: 0
+            offset (int, opcional): Música inicial do download da playlist. Default: 1
 
         Raises:
             ValueError: Se a playlist não existir ou não for do formato correto.
@@ -99,6 +99,7 @@ class Spotify(MusicDownloader):
             raise ValueError("Playlist inválida")
         
         playlist = playlist[34:].split("?")[0]
+        offset -= 1
         cont = 0
 
         while True:
@@ -116,11 +117,12 @@ class Spotify(MusicDownloader):
                     "disc_num" : r['items'][cont]['track']['disc_number']
                 })
 
-                if cont == 99:
+                if cont == 100:
                     offset += 100
                     cont = 0
                 
                 cont += 1
+
             except IndexError:
                 break
     
@@ -133,12 +135,13 @@ class Spotify(MusicDownloader):
         music = music[31:].split("?")[0]
 
         r = requests.get(f"https://api.spotify.com/v1/tracks/{music}", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json()
-        self.name.append(f"{unidecode(r['name'].replace(' ', '+'))}+{unidecode(r['album']['artists'][0]['name'].replace(' ', '+'))}")
+
+        self.name.append(f"{unidecode(r['name'].replace(' ', '+'))}+{unidecode(r['artists'][0]['name'].replace(' ', '+'))}")
         self.config.append({
             "thumbnail" : r["album"]["images"][0]["url"],
             "title" : r['name'],
             "release_date" : r['album']['release_date'],
-            "artist" : r['album']['artists'][0]['name'],
+            "artist" : r["artists"][0]['name'],
             "album" : r['album']['name'],
             "track_num" : r['track_number'],
             "disc_num" : r['disc_number']
@@ -157,20 +160,72 @@ class Youtube(MusicDownloader):
             music (str): Link da música.
         """
         music = music.split("=")[1] if "watch" in music else music.split("be/")[1]
+
         with YoutubeDL({}) as ydl:
-            title = unidecode(ydl.extract_info(f"http://www.youtube.com/watch?v={music}", download = False).get("title", None).replace(" ", "%20").replace("-", "")) # getting the video name
+            title = unidecode(ydl.extract_info(f"http://www.youtube.com/watch?v={music}", download = False).get("title", None).replace(" ", "%20").replace("-", ""))
+            author = unidecode(ydl.extract_info(f"http://www.youtube.com/watch?v={id}", download = False).get("channel", None).replace(" ", "%20").replace("-", ""))
         
-        r = requests.get(f"https://api.spotify.com/v1/search?q={title}&type=track&limit=1", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json()
+        r = requests.get(f"https://api.spotify.com/v1/search?q={title}+{author}&type=track&limit=1", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json()
         r = r["tracks"]["items"][0]
 
         self.config.append({
             "thumbnail" : r["album"]["images"][0]["url"],
             "title" : r['name'],
             "release_date" : r['album']['release_date'],
-            "artist" : r['album']['artists'][0]['name'],
+            "artist" : r["artists"][0]['name'],
             "album" : r['album']['name'],
             "track_num" : r['track_number'],
             "disc_num" : r['disc_number']
         })
 
         self.name.append(music)
+
+    def playlist(self, playlist: str, offset = 1):
+        """Objeto para o link da playlist do Youtube
+
+        Args:
+            playlist (str): Link da playlist
+            offset (int, opcional): Música inicial da playlist. Defaults to 1
+
+        Raises:
+            ValueError: Se a playlist não existir ou não for do formato correto.
+        """
+
+        if "playlist" not in playlist:
+            raise ValueError("Playlist inválida")
+        
+        offset -= 1
+        cont = 0
+
+        html = urllib.request.urlopen(playlist)
+        video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
+        new_video_ids = []
+
+        for id in video_ids:
+            if id not in new_video_ids:
+                new_video_ids.append(id) # getting the video ids from the playlist
+        
+        for id in new_video_ids[offset:]:
+            with YoutubeDL({}) as ydl:
+                title = unidecode(ydl.extract_info(f"http://www.youtube.com/watch?v={id}", download = False).get("title", None).replace(" ", "%20").replace("-", ""))
+                author = unidecode(ydl.extract_info(f"http://www.youtube.com/watch?v={id}", download = False).get("channel", None).replace(" ", "%20").replace("-", ""))
+        
+            r = requests.get(f"https://api.spotify.com/v1/search?q={title}+{author}&type=track&limit=1", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json()
+            r = r["tracks"]["items"][0]
+
+            self.config.append({
+                "thumbnail" : r["album"]["images"][0]["url"],
+                "title" : r['name'],
+                "release_date" : r['album']['release_date'],
+                "artist" : r["artists"][0]['name'],
+                "album" : r['album']['name'],
+                "track_num" : r['track_number'],
+                "disc_num" : r['disc_number']
+            })
+
+            self.name.append(id)
+
+if __name__ == "__main__":
+    a = Youtube()
+    a.playlist("https://www.youtube.com/playlist?list=PLqwGfnBwrVcuwKyEBWGhr960Xw3qV5Zd5")
+    a.download()
