@@ -99,6 +99,9 @@ class Spotify(MusicDownloader):
         if "playlist" not in playlist:
             raise ValueError("Playlist inválida")
         
+        if limit <= 0:
+            raise IndexError("Limite incorreto")
+        
         playlist = playlist[34:].split("?")[0]
         offset -= 1
         cont = 0
@@ -106,6 +109,9 @@ class Spotify(MusicDownloader):
         while True:
             try:
                 r = requests.get(f"https://api.spotify.com/v1/playlists/{playlist}/tracks?offset={offset}", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json() if limit == None else requests.get(f"https://api.spotify.com/v1/playlists/{playlist}/tracks?offset={offset}&limit={limit}", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json()
+
+                if limit  > r["total"]:
+                    raise IndexError("Limite fora do range")
 
                 r["items"][cont]["track"]["name"] = r["items"][cont]["track"]["name"].replace("/", r"%2F") if "/" in r["items"][cont]["track"]["name"] else r["items"][cont]["track"]["name"]
                 self.name.append(f"{unidecode(r['items'][cont]['track']['name'].replace(' ', '+'))}+{unidecode(r['items'][cont]['track']['album']['artists'][0]['name'].replace(' ', '+'))}")
@@ -148,6 +154,22 @@ class Spotify(MusicDownloader):
             "track_num" : r['track_number'],
             "disc_num" : r['disc_number']
         })
+
+    def get_playlist_total(self, playlist: str):
+        """Retorna a quantidade de músicas dentro da playlist. Retorna 0 se não for uma playlist do Spotify válida.
+
+        Args:
+            playlist (str): Link da playlist
+
+        Returns:
+            int: Quantidade de músicas
+        """
+        
+        if "spotify.com/playlist" not in playlist:
+            return 0
+        
+        playlist = playlist[34:].split("?")[0]
+        return requests.get(f"https://api.spotify.com/v1/playlists/{playlist}/tracks?offset=0", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json()["total"]
 
 class Youtube(MusicDownloader):
     def __init__(self, out_path: str = "."):
@@ -211,6 +233,9 @@ class Youtube(MusicDownloader):
             if id not in new_video_ids:
                 new_video_ids.append(id) # getting the video ids from the playlist
         
+        if limit > len(new_video_ids):
+            raise IndexError("Limite fora do range")
+        
         new_video_ids = new_video_ids[offset:] if limit == None else new_video_ids[offset:limit]
 
         for id in new_video_ids:
@@ -232,3 +257,27 @@ class Youtube(MusicDownloader):
             })
         
             self.name.append(id)
+    
+    def get_playlist_total(self, playlist: str):
+        """Retorna a quantidade de músicas dentro da playlist. Retorna 0 se não for uma playlist do Youtube válida.
+
+        Args:
+            playlist (str): Link da playlist
+
+        Returns:
+            int: Quantidade de músicas
+        """
+        html = urllib.request.urlopen(playlist)
+        video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
+        new_video_ids = []
+
+        for id in video_ids:
+            if id not in new_video_ids:
+                new_video_ids.append(id)
+        
+        return len(new_video_ids)
+
+if __name__ == "__main__":
+    app = Youtube()
+    # app.playlist("https://open.spotify.com/playlist/23fJjWSRNwxKtPNbsU7CSW?si=a861f7c8fd5745a0")
+    print(app.get_playlist_total("https://open.spotify.com/playlist/23fJjWSRNwxKtPNbsU7CSW?si=2787ab3eb24c4fcd"))
