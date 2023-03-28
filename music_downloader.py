@@ -3,6 +3,7 @@ from unidecode import unidecode
 from eyed3.id3.frames import ImageFrame
 from yt_dlp import YoutubeDL
 from refresh_token import Refresh
+from shutil import rmtree
 
 class MusicDownloader:
     """MusicDownloader é um módulo em Python capaz de instalar músicas playlists do Spotify e Youtube."""
@@ -78,7 +79,7 @@ class MusicDownloader:
             except:
                 continue
         
-        for img in os.listdir(f"{self.out_path}/img"): os.remove(f"{self.out_path}/img/" + img) #? removendo as imagens
+        rmtree(f"{self.out_path}/img") # removing the img temporary folder
 
 class Spotify(MusicDownloader):
     def __init__(self, out_path: str = "."):
