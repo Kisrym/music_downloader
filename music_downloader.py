@@ -86,7 +86,7 @@ class Spotify(MusicDownloader):
         super().__init__()
         self.out_path = out_path
 
-    def playlist(self, playlist: str, offset = 1, limit = None):
+    def playlist(self, playlist: str, offset = 1, limit: int = 0):
         """Objeto para o link da playlist do Spotify.
 
         Args:
@@ -99,7 +99,7 @@ class Spotify(MusicDownloader):
         if "playlist" not in playlist:
             raise ValueError("Playlist inválida")
         
-        if limit <= 0:
+        if limit < 0:
             raise IndexError("Limite incorreto")
         
         playlist = playlist[34:].split("?")[0]
@@ -108,7 +108,7 @@ class Spotify(MusicDownloader):
 
         while True:
             try:
-                r = requests.get(f"https://api.spotify.com/v1/playlists/{playlist}/tracks?offset={offset}", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json() if limit == None else requests.get(f"https://api.spotify.com/v1/playlists/{playlist}/tracks?offset={offset}&limit={limit}", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json()
+                r = requests.get(f"https://api.spotify.com/v1/playlists/{playlist}/tracks?offset={offset}", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json() if limit == 0 else requests.get(f"https://api.spotify.com/v1/playlists/{playlist}/tracks?offset={offset}&limit={limit}", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json()
 
                 if limit  > r["total"]:
                     raise IndexError("Limite fora do range")
@@ -204,7 +204,7 @@ class Youtube(MusicDownloader):
 
         self.name.append(music)
 
-    def playlist(self, playlist: str, offset = 1, limit = None):
+    def playlist(self, playlist: str, offset = 1, limit: int = 0):
         """Objeto para o link da playlist do Youtube
 
         Args:
@@ -220,9 +220,9 @@ class Youtube(MusicDownloader):
         if "playlist" not in playlist:
             raise ValueError("Playlist inválida")
         
-        if limit <= 0:
+        if limit < 0:
             raise IndexError("Limite incorreto")
-        
+               
         offset -= 1
 
         html = urllib.request.urlopen(playlist)
@@ -236,7 +236,7 @@ class Youtube(MusicDownloader):
         if limit > len(new_video_ids):
             raise IndexError("Limite fora do range")
         
-        new_video_ids = new_video_ids[offset:] if limit == None else new_video_ids[offset:limit]
+        new_video_ids = new_video_ids[offset:] if limit == 0 else new_video_ids[offset:limit]
 
         for id in new_video_ids:
             with YoutubeDL({}) as ydl:
@@ -276,8 +276,3 @@ class Youtube(MusicDownloader):
                 new_video_ids.append(id)
         
         return len(new_video_ids)
-
-if __name__ == "__main__":
-    app = Youtube()
-    # app.playlist("https://open.spotify.com/playlist/23fJjWSRNwxKtPNbsU7CSW?si=a861f7c8fd5745a0")
-    print(app.get_playlist_total("https://open.spotify.com/playlist/23fJjWSRNwxKtPNbsU7CSW?si=2787ab3eb24c4fcd"))
