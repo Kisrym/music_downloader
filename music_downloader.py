@@ -80,6 +80,17 @@ class MusicDownloader:
                 continue
         
         rmtree(f"{self.out_path}/img") # removing the img temporary folder
+    
+    def _get_track_info(self, r: dict) -> None:
+        self.config.append({
+            "thumbnail" : r["album"]["images"][0]["url"],
+            "title" : r['name'],
+            "release_date" : r['album']['release_date'],
+            "artist" : r["artists"][0]['name'],
+            "album" : r['album']['name'],
+            "track_num" : r['track_number'],
+            "disc_num" : r['disc_number']
+        })
 
 class Spotify(MusicDownloader):
     def __init__(self, out_path: str = "."):
@@ -145,15 +156,7 @@ class Spotify(MusicDownloader):
         r = requests.get(f"https://api.spotify.com/v1/tracks/{music}", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json()
 
         self.name.append(f"{unidecode(r['name'].replace(' ', '+'))}+{unidecode(r['artists'][0]['name'].replace(' ', '+'))}")
-        self.config.append({
-            "thumbnail" : r["album"]["images"][0]["url"],
-            "title" : r['name'],
-            "release_date" : r['album']['release_date'],
-            "artist" : r["artists"][0]['name'],
-            "album" : r['album']['name'],
-            "track_num" : r['track_number'],
-            "disc_num" : r['disc_number']
-        })
+        self._get_track_info(r)
 
     def get_playlist_total(self, playlist: str):
         """Retorna a quantidade de músicas dentro da playlist. Retorna 0 se não for uma playlist do Spotify válida.
@@ -186,21 +189,13 @@ class Youtube(MusicDownloader):
         music = music.split("=")[1] if "watch" in music else music.split("be/")[1]
 
         with YoutubeDL({}) as ydl:
-            title = unidecode(ydl.extract_info(f"http://www.youtube.com/watch?v={music}", download = False).get("title", None).replace(" ", "%20").replace("-", ""))
-            author = unidecode(ydl.extract_info(f"http://www.youtube.com/watch?v={id}", download = False).get("channel", None).replace(" ", "%20").replace("-", ""))
+            title = unidecode(ydl.extract_info(f"http://www.youtube.com/watch?v={music}", download = False).get("title", None).replace(" ", "+").replace("-", ""))
+            author = unidecode(ydl.extract_info(f"http://www.youtube.com/watch?v={music}", download = False).get("channel", None).replace(" ", "+").replace("-", ""))
         
         r = requests.get(f"https://api.spotify.com/v1/search?q={title}+{author}&type=track&limit=1", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json()
         r = r["tracks"]["items"][0]
 
-        self.config.append({
-            "thumbnail" : r["album"]["images"][0]["url"],
-            "title" : r['name'],
-            "release_date" : r['album']['release_date'],
-            "artist" : r["artists"][0]['name'],
-            "album" : r['album']['name'],
-            "track_num" : r['track_number'],
-            "disc_num" : r['disc_number']
-        })
+        self._get_track_info(r)
 
         self.name.append(music)
 
@@ -246,15 +241,7 @@ class Youtube(MusicDownloader):
             r = requests.get(f"https://api.spotify.com/v1/search?q={title}+{author}&type=track&limit=1", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json()
             r = r["tracks"]["items"][0]
         
-            self.config.append({
-                "thumbnail" : r["album"]["images"][0]["url"],
-                "title" : r['name'],
-                "release_date" : r['album']['release_date'],
-                "artist" : r["artists"][0]['name'],
-                "album" : r['album']['name'],
-                "track_num" : r['track_number'],
-                "disc_num" : r['disc_number']
-            })
+            self._get_track_info(r)
         
             self.name.append(id)
     
