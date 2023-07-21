@@ -264,9 +264,3 @@ class Youtube(MusicDownloader):
                 new_video_ids.append(id)
         
         return len(new_video_ids)
-
-
-if __name__ == "__main__":
-    app = Spotify()
-    app.playlist("https://open.spotify.com/playlist/5ZoiQ9pp38K0K3DF8TtykV?si=dac6a35a92df4f9c", offset= 130, amount=2000)
-    app.download()
