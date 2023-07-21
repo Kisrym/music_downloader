@@ -85,7 +85,7 @@ class Spotify(MusicDownloader):
         super().__init__()
         self.out_path = out_path
 
-    def playlist(self, playlist: str, offset = 0):
+    def playlist(self, playlist: str, offset = 1):
         """Objeto para o link da playlist do Spotify.
 
         Args:
@@ -98,8 +98,9 @@ class Spotify(MusicDownloader):
         if "playlist" not in playlist:
             raise ValueError("Playlist inválida")
         
-        playlist = playlist[34:].split("?")[0]
+        playlist = re.findall(r"(\w+\?\w+)", playlist)[0][0:-3]
         cont = 0
+        offset -= 1
 
         while True:
             try:
@@ -130,7 +131,7 @@ class Spotify(MusicDownloader):
         Args:
             music (str): Link da música.
         """
-        music = music[31:].split("?")[0]
+        music = re.findall(r"(\w+\?\w+)", music)[0][0:-3]
 
         r = requests.get(f"https://api.spotify.com/v1/tracks/{music}", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json()
         self.name.append(f"{unidecode(r['name'].replace(' ', '+'))}+{unidecode(r['album']['artists'][0]['name'].replace(' ', '+'))}")
