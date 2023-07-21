@@ -12,7 +12,8 @@ class MusicDownloader:
         self.config = []
         self.TOKEN = Refresh().refresh()
         self.yt = False
-        self.out_path = "."
+        self.out_path = os.getcwd()
+        self.headers = {"Authorization": f"Bearer {self.TOKEN}"}
     
     def download(self):
         """
@@ -93,16 +94,17 @@ class MusicDownloader:
         })
 
 class Spotify(MusicDownloader):
-    def __init__(self, out_path: str = "."):
+    def __init__(self, out_path: str = os.getcwd()):
         super().__init__()
         self.out_path = out_path
 
-    def playlist(self, playlist: str, offset = 1, limit: int = 0):
+    def playlist(self, playlist: str, offset = 1, amount: int = 0):
         """Objeto para o link da playlist do Spotify.
 
         Args:
             playlist (str): Link da playlist.
             offset (int, opcional): Música inicial do download da playlist. Default: 1
+            amount (int, opcional): Quantidade de músicas que vão ser instaladas. Default: Todas
 
         Raises:
             ValueError: Se a playlist não existir ou não for do formato correto.
@@ -110,20 +112,18 @@ class Spotify(MusicDownloader):
         if "playlist" not in playlist:
             raise ValueError("Playlist inválida")
         
-        if limit < 0:
-            raise IndexError("Limite incorreto")
+        if amount < 0:
+            raise IndexError("Quantidade incorreta")
         
-        playlist = playlist[34:].split("?")[0]
+        playlist = re.findall(r"(\w+\?\w+)", playlist)[0][0:-3]
         offset -= 1
         cont = 0
-        offset -= 1
+
+        if amount > self.get_playlist_size(playlist): raise IndexError("Quantidade informada maior que o tamanho da playlist")
 
         while True:
             try:
-                r = requests.get(f"https://api.spotify.com/v1/playlists/{playlist}/tracks?offset={offset}", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json() if limit == 0 else requests.get(f"https://api.spotify.com/v1/playlists/{playlist}/tracks?offset={offset}&limit={limit}", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json()
-
-                if limit  > r["total"]:
-                    raise IndexError("Limite fora do range")
+                r = requests.get(f"https://api.spotify.com/v1/playlists/{playlist}/tracks?offset={offset}", headers = self.headers).json() if amount == 0 else requests.get(f"https://api.spotify.com/v1/playlists/{playlist}/tracks?offset={offset}&limit={amount}", headers = self.headers).json()
 
                 r["items"][cont]["track"]["name"] = r["items"][cont]["track"]["name"].replace("/", r"%2F") if "/" in r["items"][cont]["track"]["name"] else r["items"][cont]["track"]["name"]
                 self.name.append(f"{unidecode(r['items'][cont]['track']['name'].replace(' ', '+'))}+{unidecode(r['items'][cont]['track']['album']['artists'][0]['name'].replace(' ', '+'))}")
@@ -154,12 +154,12 @@ class Spotify(MusicDownloader):
         """
         music = re.findall(r"(\w+\?\w+)", music)[0][0:-3]
 
-        r = requests.get(f"https://api.spotify.com/v1/tracks/{music}", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json()
+        r = requests.get(f"https://api.spotify.com/v1/tracks/{music}", headers = self.headers).json()
 
         self.name.append(f"{unidecode(r['name'].replace(' ', '+'))}+{unidecode(r['artists'][0]['name'].replace(' ', '+'))}")
         self._get_track_info(r)
 
-    def get_playlist_total(self, playlist: str):
+    def get_playlist_size(self, playlist: str):
         """Retorna a quantidade de músicas dentro da playlist. Retorna 0 se não for uma playlist do Spotify válida.
 
         Args:
@@ -172,11 +172,11 @@ class Spotify(MusicDownloader):
         if "spotify.com/playlist" not in playlist:
             return 0
         
-        playlist = playlist[34:].split("?")[0]
-        return requests.get(f"https://api.spotify.com/v1/playlists/{playlist}/tracks?offset=0", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json()["total"]
+        playlist = re.findall(r"(\w+\?\w+)", playlist)[0][0:-3]
+        return requests.get(f"https://api.spotify.com/v1/playlists/{playlist}/tracks?offset=0", headers = self.headers).json()["total"]
 
 class Youtube(MusicDownloader):
-    def __init__(self, out_path: str = "."):
+    def __init__(self, out_path: str = os.getcwd()):
         super().__init__()
         self.yt = True
         self.out_path = out_path
@@ -193,20 +193,20 @@ class Youtube(MusicDownloader):
             title = unidecode(ydl.extract_info(f"http://www.youtube.com/watch?v={music}", download = False).get("title", None).replace(" ", "+").replace("-", ""))
             author = unidecode(ydl.extract_info(f"http://www.youtube.com/watch?v={music}", download = False).get("channel", None).replace(" ", "+").replace("-", ""))
         
-        r = requests.get(f"https://api.spotify.com/v1/search?q={title}+{author}&type=track&limit=1", headers = {"Authorization": f"Bearer {self.TOKEN}"}).json()
+        r = requests.get(f"https://api.spotify.com/v1/search?q={title}+{author}&type=track&limit=1", headers = self.headers).json()
         r = r["tracks"]["items"][0]
 
         self._get_track_info(r)
 
         self.name.append(music)
 
-    def playlist(self, playlist: str, offset = 1, limit: int = 0):
+    def playlist(self, playlist: str, offset = 1, amount: int = 0):
         """Objeto para o link da playlist do Youtube
 
         Args:
             playlist (str): Link da playlist
             offset (int, opcional): Música inicial da playlist. Default 1
-            limit (int, opcional): Quantidade máxima de itens a ser instalados. Default: None
+            amount (int, opcional): Quantidade de músicas que vão ser instaladas. Default: Todas
 
         Raises:
             ValueError: Se a playlist não existir ou não for do formato correto.
@@ -216,8 +216,8 @@ class Youtube(MusicDownloader):
         if "playlist" not in playlist:
             raise ValueError("Playlist inválida")
         
-        if limit < 0:
-            raise IndexError("Limite incorreto")
+        if amount < 0:
+            raise IndexError("Quantidade incorreta")
                
         offset -= 1
 
@@ -229,10 +229,10 @@ class Youtube(MusicDownloader):
             if id not in new_video_ids:
                 new_video_ids.append(id) # getting the video ids from the playlist
         
-        if limit > len(new_video_ids):
+        if amount > len(new_video_ids):
             raise IndexError("Limite fora do range")
         
-        new_video_ids = new_video_ids[offset:] if limit == 0 else new_video_ids[offset:limit]
+        new_video_ids = new_video_ids[offset:] if amount == 0 else new_video_ids[offset:amount]
 
         for id in new_video_ids:
             with YoutubeDL({}) as ydl:
@@ -246,7 +246,7 @@ class Youtube(MusicDownloader):
         
             self.name.append(id)
     
-    def get_playlist_total(self, playlist: str):
+    def get_playlist_size(self, playlist: str):
         """Retorna a quantidade de músicas dentro da playlist. Retorna 0 se não for uma playlist do Youtube válida.
 
         Args:
@@ -264,3 +264,9 @@ class Youtube(MusicDownloader):
                 new_video_ids.append(id)
         
         return len(new_video_ids)
+
+
+if __name__ == "__main__":
+    app = Spotify()
+    app.playlist("https://open.spotify.com/playlist/5ZoiQ9pp38K0K3DF8TtykV?si=dac6a35a92df4f9c", offset= 130, amount=2000)
+    app.download()
