@@ -4,6 +4,15 @@ from eyed3.id3.frames import ImageFrame
 from yt_dlp import YoutubeDL
 from refresh_token import Refresh
 from shutil import rmtree
+import argparse
+
+parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser()
+parser.add_argument("-audio", action="store", type=str, help="Link da playlist/musica")
+parser.add_argument("-type", action="store", type=str, help= "De onde a música provém (Spotify/Youtube)")
+parser.add_argument("--offset", action="store", type=int, help="Música inicial da playlist", default = 1)
+parser.add_argument("--amount", action="store", type=int, help="Quantidade de músicas que vão ser instaladas (0 para todas)", default = 0)
+args = parser.parse_args()
 
 class MusicDownloader:
     """MusicDownloader é um módulo em Python capaz de instalar músicas playlists do Spotify e Youtube."""
@@ -264,3 +273,19 @@ class Youtube(MusicDownloader):
                 new_video_ids.append(id)
         
         return len(new_video_ids)
+
+if str(args.type).lower() == "youtube":
+    app = Youtube()
+    if "playlist" in args.audio:
+        app.playlist(args.audio, offset = args.offset, amount = args.amount)
+    else:
+        app.track(args.audio)
+
+if str(args.type).lower() == "spotify":
+    app = Spotify()
+    if "playlist" in args.audio:
+        app.playlist(args.audio, offset = args.offset, amount = args.amount)
+    else:
+        app.track(args.audio)
+
+app.download()
