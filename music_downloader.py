@@ -124,11 +124,12 @@ class Spotify(MusicDownloader):
         if amount < 0:
             raise IndexError("Quantidade incorreta")
         
+        if amount > self.get_playlist_size(playlist):
+            raise IndexError("Quantidade informada maior que o tamanho da playlist")
+        
         playlist = re.findall(r"(\w+\?\w+)", playlist)[0][0:-3]
         offset -= 1
         cont = 0
-
-        if amount > self.get_playlist_size(playlist): raise IndexError("Quantidade informada maior que o tamanho da playlist")
 
         while True:
             try:
