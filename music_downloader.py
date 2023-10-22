@@ -5,13 +5,25 @@ from yt_dlp import YoutubeDL
 from refresh_token import Refresh
 from shutil import rmtree
 import argparse
+import base64
+import json
 
 parser = argparse.ArgumentParser()
-parser = argparse.ArgumentParser()
-parser.add_argument("-audio", action="store", type=str, help="Link da playlist/musica")
-parser.add_argument("-type", action="store", type=str, help= "De onde a música provém (Spotify/Youtube)")
-parser.add_argument("--offset", action="store", type=int, help="Música inicial da playlist", default = 1)
-parser.add_argument("--amount", action="store", type=int, help="Quantidade de músicas que vão ser instaladas (0 para todas)", default = 0)
+install_group = parser.add_argument_group("Install")
+setting_group = parser.add_argument_group("Setting")
+
+parser.add_argument("operacao", nargs="?", choices=["config", "install", ""], help = "Operação")
+
+install_group.add_argument("-audio", action="store", type=str, help="Playlist/music link")
+install_group.add_argument("-type", action="store", type=str, help= "Playlist/music platform (Spotify/YouTube)")
+install_group.add_argument("--offset", action="store", type=int, help="The first music that will be installed", default = 1)
+install_group.add_argument("--amount", action="store", type=int, help="Number of songs that will be installed (0 for all)", default = 0)
+install_group.add_argument("--path", action="store", type=str, help="Installation path", default = os.getcwd())
+
+setting_group.add_argument("-client_id", action="store", type=str, help="Client id from Spotify developer")
+setting_group.add_argument("-secret_id", action="store", type=str, help="Client secret id from Spotify developer")
+setting_group.add_argument("-refresh_token", action="store", type=str, help="Refresh token from Spotify developer")
+
 args = parser.parse_args()
 
 class MusicDownloader:
@@ -275,18 +287,33 @@ class Youtube(MusicDownloader):
         
         return len(new_video_ids)
 
-if str(args.type).lower() == "youtube":
-    app = Youtube()
-    if "playlist" in args.audio:
-        app.playlist(args.audio, offset = args.offset, amount = args.amount)
-    else:
-        app.track(args.audio)
+if args.operacao == "install":
+    if str(args.type).lower() == "youtube":
+        app = Youtube(args.path)
+        if "playlist" in args.audio:
+            app.playlist(args.audio, offset = args.offset, amount = args.amount)
+        else:
+            app.track(args.audio)
 
-if str(args.type).lower() == "spotify":
-    app = Spotify()
-    if "playlist" in args.audio:
-        app.playlist(args.audio, offset = args.offset, amount = args.amount)
-    else:
-        app.track(args.audio)
+    if str(args.type).lower() == "spotify":
+        app = Spotify(args.path)
+        if "playlist" in args.audio:
+            app.playlist(args.audio, offset = args.offset, amount = args.amount)
+        else:
+            app.track(args.audio)
+    
+    app.download()
 
-app.download()
+elif args.operacao == "config":
+    config = {}
+    if args.client_id and args.secret_id:
+        config["auth"] = base64.b64encode(f"{args.client_id}:{args.secret_id}".encode("utf-8")).decode("utf-8") # encrypting into base64
+
+    if args.refresh_token:
+        config["refresh_token"] = args.refresh_token
+
+        with open("config.json", "w") as f:
+            json.dump(config, f, indent = 3)
+    
+    else:
+        parser.error("Informações Insuficientes")

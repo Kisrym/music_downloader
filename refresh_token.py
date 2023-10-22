@@ -17,7 +17,7 @@ class Refresh:
         if len(r.json()) > 2:
             return r.json()["access_token"]
         else:
-            raise KeyError("Informações inválidas.")
+            raise KeyError("Informações inválidas e/ou incompletas. Por favor, adicione as informações necessárias. Use -h para mais informações.")
 
 if __name__ == "__main__":
     a = Refresh()

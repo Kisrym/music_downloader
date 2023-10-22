@@ -6,30 +6,63 @@ Para melhores resultados, experimente usar o link da música do artista original
 
 ## Usando o código
 
-Para usar o código, só é preciso instalá-lo (prestando atenção com as pastas *img* e *musicas*, necessárias para o funcionamento do código) e rodar com o comando:
+Há dois métodos para rodar o código: modificando o próprio arquivo/importando para outro arquivo Python ou utilizando `argparse`
 
-```bash
-python3 music_downloader.py
-```
+Antes de rodar o código, certifique-se de que o este esteja configurado corretamente (Veja [Configuração](#configuração)).
 
-ou
+#### Modificando/importando o arquivo
 
-```bash
-python music_downloader.py
-```
-
-## Exemplos
+Você pode editar manualmente o arquivo do código fonte e rodá-lo. Por exemplo:
 
 ```python
+if __name__ == "__main__":
+   app = Spotify()
+   app.track(url)
+   app.download()
+```
+
+Ou, em outro arquivo, importar o código fonte:
+
+```python
+from music_downloader import Spotify
+
 app = Spotify()
-app.playlist(spotify_link)
+app.track(url)
 app.download()
-# Mesma coisa com a classe Youtube
+```
+
+#### Argparse
+
+Os argumentos presentes são:
+
+- -**audio**: Link da música/playlist
+- -**type**: A plataforma da música/playlist a ser instalada
+- --**path**: O diretório de instalação (Padrão é o diretório atual)
+
+Caso você deseja instalar uma playlist, há mais dois argumentos opcionais:
+
+- --**offset** A primeira música a ser instalada na playlist
+- --**amount**: A quantidade de músicas a serem instaladas (0 para todas)
+
+Para instalar as músicas, é necessário utilizar o operador `install` antes dos argumentos. Veja nos exemplos:
+
+##### Exemplos:
+
+```bash
+python music_downloader.py install -type youtube -audio url_da_musica
+```
+
+Ou, caso queira instalar uma playlist
+
+```bash
+python music_downloader.py install -type spotify -audio url_da_playlist --offset 5 --amount 10
 ```
 
 ## Configuração
 
-As configurações do código são feitas no `config.json`.
+As configurações podem ser feitas também com `argparse` ou, em última medida, manualmente no arquivo `config.json`
+
+No arquivo `config.json` estão dispostas duas informações:
 
 | Key           | Value                                            |
 | ------------- | ------------------------------------------------ |
@@ -37,6 +70,16 @@ As configurações do código são feitas no `config.json`.
 | auth          | `client_id:secret_id` criptografado em base64. |
 
 Ambas configurações são adquiridas criando um aplicativo no [Spotify for Developers](https://developer.spotify.com).
+
+#### Configurando com argumentos
+
+Para configurar, você deve mudar a operação de `install` para `config` e disponibilizar as informações necessárias. Por exemplo:
+
+```bash
+python music_downloader.py config -client_id client_id_spotify -secret_id secret_id_spotify -refresh_token refresh_token_spotify
+```
+
+É preciso configurar apenas uma vez, logo depois poderá começar a usar o código da maneira que quiseres.
 
 ## Instalação dos requisitos
 
