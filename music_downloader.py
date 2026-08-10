@@ -7,6 +7,14 @@ from shutil import rmtree
 import argparse
 import base64
 import json
+import socket
+
+_old_getaddrinfo = socket.getaddrinfo
+
+def _force_ipv4_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    return _old_getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
+
+socket.getaddrinfo = _force_ipv4_getaddrinfo
 
 parser = argparse.ArgumentParser()
 install_group = parser.add_argument_group("Install")
@@ -55,7 +63,12 @@ class MusicDownloader:
 
         for item in range(len(self.name)):
             if not self.yt:
-                html = urllib.request.urlopen(f"https://www.youtube.com/results?search_query={self.name[item]}")
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                }
+
+                req = urllib.request.Request(f"https://www.youtube.com/results?search_query={self.name[item]}", headers=headers)
+                html = urllib.request.urlopen(req, timeout=5)
                 video_id = re.findall(r"watch\?v=(\S{11})", html.read().decode())[0] #? pegando o id do vídeo
 
             else:
@@ -145,8 +158,9 @@ class Spotify(MusicDownloader):
 
         while True:
             try:
-                r = requests.get(f"https://api.spotify.com/v1/playlists/{playlist}/tracks?offset={offset}", headers = self.headers).json() if amount == 0 else requests.get(f"https://api.spotify.com/v1/playlists/{playlist}/tracks?offset={offset}&limit={amount}", headers = self.headers).json()
+                r = requests.get(f"https://api.spotify.com/v1/playlists/{playlist}/tracks?offset={offset}", headers = self.headers, timeout=5).json() if amount == 0 else requests.get(f"https://api.spotify.com/v1/playlists/{playlist}/tracks?offset={offset}&limit={amount}", headers = self.headers, timeout=5).json()
 
+                print(r)
                 r["items"][cont]["track"]["name"] = r["items"][cont]["track"]["name"].replace("/", r"%2F") if "/" in r["items"][cont]["track"]["name"] else r["items"][cont]["track"]["name"]
                 self.name.append(f"{unidecode(r['items'][cont]['track']['name'].replace(' ', '+'))}+{unidecode(r['items'][cont]['track']['album']['artists'][0]['name'].replace(' ', '+'))}")
                 self.config.append({
@@ -195,7 +209,10 @@ class Spotify(MusicDownloader):
             return 0
         
         playlist = re.findall(r"(\w+\?\w+)", playlist)[0][0:-3]
-        return requests.get(f"https://api.spotify.com/v1/playlists/{playlist}/tracks?offset=0", headers = self.headers).json()["total"]
+        print(playlist)
+        r = requests.get(f"https://api.spotify.com/v1/playlists/{playlist}/tracks?offset=0", headers = self.headers, timeout=5)
+        print(r.json())
+        return r.json()["total"]
 
 class Youtube(MusicDownloader):
     def __init__(self, out_path: str = os.getcwd()):

@@ -9,10 +9,14 @@ class Refresh:
             self.auth = data["auth"]
 
     def refresh(self):
+        print("chammou")
         r = requests.post(r"https://accounts.spotify.com/api/token",
                         data = {"grant_type" : "refresh_token", "refresh_token" : self.refresh_token},
-                        headers = {"Authorization" : "Basic " + self.auth}
+                        headers = {"Authorization" : "Basic " + self.auth},
+                        timeout=5
                     )
+
+        print("acabou")
         
         if len(r.json()) > 2:
             return r.json()["access_token"]
